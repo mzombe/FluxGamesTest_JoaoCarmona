@@ -58,6 +58,8 @@ namespace StarterAssets
 		public float CameraAngleOverride = 0.0f;
 		[Tooltip("For locking the camera position on all axis")]
 		public bool LockCameraPosition = false;
+		[Header("Events")]
+		[SerializeField] private ScriptableGameEvent _attackEvent;
 
 		// cinemachine
 		private float _cinemachineTargetYaw;
@@ -81,6 +83,8 @@ namespace StarterAssets
 		private int _animIDJump;
 		private int _animIDFreeFall;
 		private int _animIDMotionSpeed;
+		private int _animIDWalk;
+		private int _animIDDoubleJump;
 
 		private PlayerInput _playerInput;
 		private Animator _animator;
@@ -95,7 +99,8 @@ namespace StarterAssets
 		private static readonly int Kick = Animator.StringToHash("Kick");
 
 		private bool IsCurrentDeviceMouse => _playerInput.currentControlScheme == "KeyboardMouse";
-
+		private bool isWalking;
+		private bool doubleJump;
 		private void Awake()
 		{
 			// get a reference to our main camera
@@ -131,10 +136,24 @@ namespace StarterAssets
 
 		private void Attack()
 		{
-			if(_input.buttonX)
-				_animator.SetTrigger(Punch);
-			if(_input.buttonY)
-				_animator.SetTrigger(Kick);
+			isWalking = _controller.velocity.x > 0 || _controller.velocity.z > 0 ? true : false; //Operador Ternário para verificiar se o player esta andando
+			_animator.SetBool(_animIDWalk, isWalking);
+
+			if(_animator.GetCurrentAnimatorStateInfo(0).tagHash == Animator.StringToHash("Idle") && !isWalking){
+				if(_input.ButtonX || _input.ButtonY) _attackEvent.Invoke();
+			}
+	
+			if(_input.ButtonX){
+				_animator.SetBool(Punch, true);
+			}else{
+				_animator.SetBool(Punch, false);
+			}
+			
+			if(_input.ButtonY){
+				_animator.SetBool(Kick, true);
+			}else{
+				_animator.SetBool(Kick, false);
+			}
 		}
 
 		private void LateUpdate()
@@ -149,6 +168,8 @@ namespace StarterAssets
 			_animIDJump = Animator.StringToHash("Jump");
 			_animIDFreeFall = Animator.StringToHash("FreeFall");
 			_animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
+			_animIDWalk = Animator.StringToHash("isWalking");
+			_animIDDoubleJump = Animator.StringToHash("DoubleJump");
 		}
 
 		private void GroundedCheck()
@@ -249,6 +270,9 @@ namespace StarterAssets
 		{
 			if (Grounded)
 			{
+				doubleJump = false;
+				_animator.SetBool(_animIDDoubleJump, false);
+
 				// reset the fall timeout timer
 				_fallTimeoutDelta = FallTimeout;
 
@@ -286,6 +310,13 @@ namespace StarterAssets
 			}
 			else
 			{
+				//Double Jump
+				if(Input.GetKeyDown(KeyCode.Space) && !doubleJump){
+					_verticalVelocity = Mathf.Sqrt((JumpHeight*2) * -2f * Gravity);
+					_animator.SetBool(_animIDDoubleJump, true);
+					doubleJump = true;
+				}
+
 				// reset the jump timeout timer
 				_jumpTimeoutDelta = JumpTimeout;
 

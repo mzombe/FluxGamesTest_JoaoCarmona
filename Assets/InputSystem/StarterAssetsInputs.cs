@@ -13,20 +13,16 @@ namespace StarterAssets
         public Vector2 look;
         public bool jump;
         public bool sprint;
-        public bool buttonX;
-        private bool _buttonY;
-        private bool Q, E;
 
-        public bool buttonY
-        {
-            get
-            {
-                if (_buttonY && Random.Range(0, 100) > 98)
-                    jump = true;
-                return _buttonY;
-            }
-            set { _buttonY = value; }
-        }
+        //Váriaveis publicas que somente podem ser lidas pelos scripts externos
+        public bool ButtonX {get {return _buttonX;} set {value = _buttonX;}}
+        public bool ButtonY {get {return _buttonY;} set {value = _buttonY;}}
+
+        private bool _buttonX;
+        private bool _buttonY;
+        private bool Q;
+        private bool E;
+
 
         [Header("Movement Settings")] public bool analogMovement;
 
@@ -43,17 +39,9 @@ namespace StarterAssets
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Q) && !Q)
-                Q = true;
-            if (Input.GetKeyUp(KeyCode.Q) && Q)
-                Q = false;
-            if (Input.GetKeyDown(KeyCode.E) && !E)
-                E = true;
-            if (Input.GetKeyUp(KeyCode.E) && E)
-                E = false;
-                
-            buttonX = _gamepad.buttonWest.isPressed || Q;
-            buttonY = _gamepad.buttonNorth.isPressed || E;
+            //Operadores Ternários para definir qual tecla será utilizada
+            _buttonX = _gamepad != null ? _gamepad.buttonWest.isPressed : Input.GetKeyDown(KeyCode.Q);
+            _buttonY = _gamepad != null ? _gamepad.buttonNorth.isPressed : Input.GetKeyDown(KeyCode.E);
         }
 #if ENABLE_INPUT_SYSTEM && STARTER_ASSETS_PACKAGES_CHECKED
         public void OnMove(InputValue value)
